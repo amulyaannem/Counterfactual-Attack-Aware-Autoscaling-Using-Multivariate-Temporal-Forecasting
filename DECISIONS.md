@@ -129,3 +129,8 @@ Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/0
 - 2026-10-29: WorldCup98 TR2.gz verified (7,170,735 B, gzip OK, md5 matches Zenodo).
 - TR2_baseline_5s.csv built: 17,280 bins, sum check OK. Step size 5 s (default, matches TSD windows).
 - TR1/TR3 downloading in background; not yet inspected.
+
+## 14. TSD Flood
+- 2026-10-29: TSD flood windows (TCP > 1e5; 59 Jan, 94 Mar) are flat plateaus (Jan 0.88-1.07, Mar 0.76-1.008 of flood median); 
+- same set at thresholds 3e4/1e5/3e5 (Mar 95 at 3e4). Normal windows near-idle (median 60/42 packets). 
+- TSD gives no usable attack shape or flood/legit ratio: attack shape and rho are synthetic and swept.
