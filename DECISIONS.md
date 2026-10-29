@@ -134,3 +134,8 @@ Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/0
 - 2026-10-29: TSD flood windows (TCP > 1e5; 59 Jan, 94 Mar) are flat plateaus (Jan 0.88-1.07, Mar 0.76-1.008 of flood median); 
 - same set at thresholds 3e4/1e5/3e5 (Mar 95 at 3e4). Normal windows near-idle (median 60/42 packets). 
 - TSD gives no usable attack shape or flood/legit ratio: attack shape and rho are synthetic and swept.
+
+- 2026-10-29: TSD label rule reproduced by counts: H = SYN - #ACK > 0 gives 59+170 = 229 (Jan), 94+319 = 413 (Mar),
+matching label totals (per-window match not checked). Flood windows have SYN-ACK/SYN ~ 4e-5 (replay setup, not
+live-victim behaviour). In floods ACK ~ RST, so ACK is not a clean handshake-completion counter (pending check).
+

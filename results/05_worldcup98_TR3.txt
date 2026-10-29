@@ -1,0 +1,14 @@
+decompressed bytes: 46,844,840  (mod 20 = 0)
+records: 2,342,242
+UTC range: 1998-05-22T22:00:01 -> 1998-05-23T22:00:00  (24.00 h)
+sorted by time: True
+seconds spanned: 86,400; zero-request seconds: 0
+req/s: median 26, p99 53, max 81
+req/min: median 1582, max 3050, max/median 1.93
+5-min peak/median: 1.64
+requests per hour (from start): [105727, 94194, 96066, 94705, 87120, 77705, 70436, 62157, 64773, 78339, 82620, 86563, 86513, 81845, 99351, 116227, 120999, 128231, 139666, 127114, 124242, 116378, 102148, 99123]
+unique clients: 28,829; top client share: 0.0029
+method raw values (top 8): {0: 2341339, 1: 888, 6: 7, 2: 6, 8: 2}
+status raw values (top 8): {66: 1473740, 130: 476033, 77: 320030, 141: 62639, 72: 6317, 83: 1914, 136: 710, 147: 590}
+type raw values (top 8): {1: 2010205, 0: 262975, 10: 36929, 4: 20198, 8: 6820, 12: 3629, 3: 534, 6: 519}
+server raw values (top 8): {33: 772249, 99: 385326, 98: 381677, 36: 203485, 37: 201042, 35: 195456, 34: 185561, 32: 17446}
