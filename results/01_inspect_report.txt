@@ -1,0 +1,282 @@
+Encoding: utf-8
+
+======================================================================
+1. SHAPE
+======================================================================
+rows=225,745  cols=85
+
+======================================================================
+2. COLUMN NAMES (raw)
+======================================================================
+Columns with leading/trailing whitespace: 70
+['Flow ID', 'Source IP', 'Source Port', 'Destination IP', 'Destination Port', 'Protocol', 'Timestamp', 'Flow Duration', 'Total Fwd Packets', 'Total Backward Packets', 'Total Length of Fwd Packets', 'Total Length of Bwd Packets', 'Fwd Packet Length Max', 'Fwd Packet Length Min', 'Fwd Packet Length Mean', 'Fwd Packet Length Std', 'Bwd Packet Length Max', 'Bwd Packet Length Min', 'Bwd Packet Length Mean', 'Bwd Packet Length Std', 'Flow Bytes/s', 'Flow Packets/s', 'Flow IAT Mean', 'Flow IAT Std', 'Flow IAT Max', 'Flow IAT Min', 'Fwd IAT Total', 'Fwd IAT Mean', 'Fwd IAT Std', 'Fwd IAT Max', 'Fwd IAT Min', 'Bwd IAT Total', 'Bwd IAT Mean', 'Bwd IAT Std', 'Bwd IAT Max', 'Bwd IAT Min', 'Fwd PSH Flags', 'Bwd PSH Flags', 'Fwd URG Flags', 'Bwd URG Flags', 'Fwd Header Length', 'Bwd Header Length', 'Fwd Packets/s', 'Bwd Packets/s', 'Min Packet Length', 'Max Packet Length', 'Packet Length Mean', 'Packet Length Std', 'Packet Length Variance', 'FIN Flag Count', 'SYN Flag Count', 'RST Flag Count', 'PSH Flag Count', 'ACK Flag Count', 'URG Flag Count', 'CWE Flag Count', 'ECE Flag Count', 'Down/Up Ratio', 'Average Packet Size', 'Avg Fwd Segment Size', 'Avg Bwd Segment Size', 'Fwd Header Length.1', 'Fwd Avg Bytes/Bulk', 'Fwd Avg Packets/Bulk', 'Fwd Avg Bulk Rate', 'Bwd Avg Bytes/Bulk', 'Bwd Avg Packets/Bulk', 'Bwd Avg Bulk Rate', 'Subflow Fwd Packets', 'Subflow Fwd Bytes', 'Subflow Bwd Packets', 'Subflow Bwd Bytes', 'Init_Win_bytes_forward', 'Init_Win_bytes_backward', 'act_data_pkt_fwd', 'min_seg_size_forward', 'Active Mean', 'Active Std', 'Active Max', 'Active Min', 'Idle Mean', 'Idle Std', 'Idle Max', 'Idle Min', 'Label']
+
+======================================================================
+3. DTYPES
+======================================================================
+int64      56
+float64    24
+str         5
+Object (non-numeric) columns: ['Flow ID', 'Source IP', 'Destination IP', 'Timestamp', 'Label']
+
+======================================================================
+4. SAMPLE ROWS (first 3, transposed)
+======================================================================
+                                                                   0                                      1                                      2
+Flow ID                      192.168.10.5-104.16.207.165-54865-443-6  192.168.10.5-104.16.28.216-55054-80-6  192.168.10.5-104.16.28.216-55055-80-6
+Source IP                                             104.16.207.165                          104.16.28.216                          104.16.28.216
+Source Port                                                      443                                     80                                     80
+Destination IP                                          192.168.10.5                           192.168.10.5                           192.168.10.5
+Destination Port                                               54865                                  55054                                  55055
+Protocol                                                           6                                      6                                      6
+Timestamp                                              7/7/2017 3:30                          7/7/2017 3:30                          7/7/2017 3:30
+Flow Duration                                                      3                                    109                                     52
+Total Fwd Packets                                                  2                                      1                                      1
+Total Backward Packets                                             0                                      1                                      1
+Total Length of Fwd Packets                                       12                                      6                                      6
+Total Length of Bwd Packets                                        0                                      6                                      6
+Fwd Packet Length Max                                              6                                      6                                      6
+Fwd Packet Length Min                                              6                                      6                                      6
+Fwd Packet Length Mean                                           6.0                                    6.0                                    6.0
+Fwd Packet Length Std                                            0.0                                    0.0                                    0.0
+Bwd Packet Length Max                                              0                                      6                                      6
+Bwd Packet Length Min                                              0                                      6                                      6
+Bwd Packet Length Mean                                           0.0                                    6.0                                    6.0
+Bwd Packet Length Std                                            0.0                                    0.0                                    0.0
+Flow Bytes/s                                               4000000.0                            110091.7431                            230769.2308
+Flow Packets/s                                           666666.6667                            18348.62385                            38461.53846
+Flow IAT Mean                                                    3.0                                  109.0                                   52.0
+Flow IAT Std                                                     0.0                                    0.0                                    0.0
+Flow IAT Max                                                       3                                    109                                     52
+Flow IAT Min                                                       3                                    109                                     52
+Fwd IAT Total                                                      3                                      0                                      0
+Fwd IAT Mean                                                     3.0                                    0.0                                    0.0
+Fwd IAT Std                                                      0.0                                    0.0                                    0.0
+Fwd IAT Max                                                        3                                      0                                      0
+Fwd IAT Min                                                        3                                      0                                      0
+Bwd IAT Total                                                      0                                      0                                      0
+Bwd IAT Mean                                                     0.0                                    0.0                                    0.0
+Bwd IAT Std                                                      0.0                                    0.0                                    0.0
+Bwd IAT Max                                                        0                                      0                                      0
+Bwd IAT Min                                                        0                                      0                                      0
+Fwd PSH Flags                                                      0                                      0                                      0
+Bwd PSH Flags                                                      0                                      0                                      0
+Fwd URG Flags                                                      0                                      0                                      0
+Bwd URG Flags                                                      0                                      0                                      0
+Fwd Header Length                                                 40                                     20                                     20
+Bwd Header Length                                                  0                                     20                                     20
+Fwd Packets/s                                            666666.6667                            9174.311927                            19230.76923
+Bwd Packets/s                                                    0.0                            9174.311927                            19230.76923
+Min Packet Length                                                  6                                      6                                      6
+Max Packet Length                                                  6                                      6                                      6
+Packet Length Mean                                               6.0                                    6.0                                    6.0
+Packet Length Std                                                0.0                                    0.0                                    0.0
+Packet Length Variance                                           0.0                                    0.0                                    0.0
+FIN Flag Count                                                     0                                      0                                      0
+SYN Flag Count                                                     0                                      0                                      0
+RST Flag Count                                                     0                                      0                                      0
+PSH Flag Count                                                     0                                      0                                      0
+ACK Flag Count                                                     1                                      1                                      1
+URG Flag Count                                                     0                                      1                                      1
+CWE Flag Count                                                     0                                      0                                      0
+ECE Flag Count                                                     0                                      0                                      0
+Down/Up Ratio                                                      0                                      1                                      1
+Average Packet Size                                              9.0                                    9.0                                    9.0
+Avg Fwd Segment Size                                             6.0                                    6.0                                    6.0
+Avg Bwd Segment Size                                             0.0                                    6.0                                    6.0
+Fwd Header Length.1                                               40                                     20                                     20
+Fwd Avg Bytes/Bulk                                                 0                                      0                                      0
+Fwd Avg Packets/Bulk                                               0                                      0                                      0
+Fwd Avg Bulk Rate                                                  0                                      0                                      0
+Bwd Avg Bytes/Bulk                                                 0                                      0                                      0
+Bwd Avg Packets/Bulk                                               0                                      0                                      0
+Bwd Avg Bulk Rate                                                  0                                      0                                      0
+Subflow Fwd Packets                                                2                                      1                                      1
+Subflow Fwd Bytes                                                 12                                      6                                      6
+Subflow Bwd Packets                                                0                                      1                                      1
+Subflow Bwd Bytes                                                  0                                      6                                      6
+Init_Win_bytes_forward                                            33                                     29                                     29
+Init_Win_bytes_backward                                           -1                                    256                                    256
+act_data_pkt_fwd                                                   1                                      0                                      0
+min_seg_size_forward                                              20                                     20                                     20
+Active Mean                                                      0.0                                    0.0                                    0.0
+Active Std                                                       0.0                                    0.0                                    0.0
+Active Max                                                         0                                      0                                      0
+Active Min                                                         0                                      0                                      0
+Idle Mean                                                        0.0                                    0.0                                    0.0
+Idle Std                                                         0.0                                    0.0                                    0.0
+Idle Max                                                           0                                      0                                      0
+Idle Min                                                           0                                      0                                      0
+Label                                                         BENIGN                                 BENIGN                                 BENIGN
+
+======================================================================
+5. LABELS
+======================================================================
+Label
+DDoS      128027
+BENIGN     97718
+Label
+DDoS      0.5671
+BENIGN    0.4329
+Distinct raw label values (repr): ["'DDoS'", "'BENIGN'"]
+
+======================================================================
+6. MISSING / INFINITE / MALFORMED
+======================================================================
+Columns with NaN: 1
+Flow Bytes/s    4
+Object columns with non-numeric junk: none
+Columns with +/-inf: 2
+Flow Bytes/s      30
+Flow Packets/s    34
+Rows with at least one inf: 34
+Label
+BENIGN    32
+DDoS       2
+
+======================================================================
+7. DUPLICATES
+======================================================================
+Fully duplicated rows (excluding first occurrence): 2
+Rows duplicated on all non-label columns: 2
+Identical-feature groups with CONFLICTING labels: 0
+
+======================================================================
+8. CONSTANT COLUMNS
+======================================================================
+Constant numeric columns: ['Bwd PSH Flags', 'Fwd URG Flags', 'Bwd URG Flags', 'CWE Flag Count', 'Fwd Avg Bytes/Bulk', 'Fwd Avg Packets/Bulk', 'Fwd Avg Bulk Rate', 'Bwd Avg Bytes/Bulk', 'Bwd Avg Packets/Bulk', 'Bwd Avg Bulk Rate']
+
+======================================================================
+9. NEGATIVE VALUES (numeric columns)
+======================================================================
+Flow Duration                  2
+Flow Bytes/s                   2
+Flow Packets/s                 2
+Flow IAT Mean                  2
+Flow IAT Max                   2
+Flow IAT Min                 108
+Fwd IAT Min                    6
+Init_Win_bytes_forward     32925
+Init_Win_bytes_backward    88299
+
+======================================================================
+10. NUMERIC SUMMARY (selected columns)
+======================================================================
+                           count          mean           std         min        1%           50%           99%           max
+Flow Duration           225745.0  1.624165e+07  3.152437e+07        -1.0  4.000000  1.452333e+06  1.158602e+08  1.199999e+08
+Total Fwd Packets       225745.0  4.874916e+00  1.542287e+01         1.0  1.000000  3.000000e+00  2.700000e+01  1.932000e+03
+Total Backward Packets  225745.0  4.572775e+00  2.175536e+01         0.0  0.000000  4.000000e+00  2.900000e+01  2.942000e+03
+Flow Bytes/s            225711.0  5.853939e+05  1.688552e+07 -12000000.0  0.000000  1.133466e+03  4.000000e+06  2.070000e+09
+Flow Packets/s          225711.0  1.424120e+04  1.151042e+05  -2000000.0  0.128569  5.175421e+00  6.000000e+05  3.000000e+06
+
+======================================================================
+11. TIMESTAMPS
+======================================================================
+Raw samples: ['7/7/2017 3:30', '7/7/2017 3:30', '7/7/2017 3:30', '7/7/2017 3:30', '7/7/2017 3:30']
+Raw samples (tail): ['7/7/2017 5:02', '7/7/2017 5:02', '7/7/2017 5:02']
+[month-first] unparsed=0  min=2017-07-07 03:30:00  max=2017-07-07 05:02:00
+[day-first] unparsed=0  min=2017-07-07 03:30:00  max=2017-07-07 05:02:00
+
+(Check the raw samples above to decide which parsing is correct. Below uses month-first.)
+Monotonic increasing in file order: True
+Distinct timestamps: 93
+Distinct seconds values (0-59): 1
+Gap between distinct timestamps (s): min=60.0  median=60.0  max=60.0
+Flows per distinct timestamp: min=84  median=757.0  max=11188
+
+Flows per minute by label:
+y                    BENIGN  DDoS
+m                                
+2017-07-07 03:30:00    1728     0
+2017-07-07 03:31:00    1905     0
+2017-07-07 03:32:00     386     0
+2017-07-07 03:33:00    1402     0
+2017-07-07 03:34:00     873     0
+2017-07-07 03:35:00     566     0
+2017-07-07 03:36:00     673     0
+2017-07-07 03:37:00     995     0
+2017-07-07 03:38:00    1040     0
+2017-07-07 03:39:00     591     0
+2017-07-07 03:40:00    1386     0
+2017-07-07 03:41:00     832     0
+2017-07-07 03:42:00     976     0
+2017-07-07 03:43:00     198     0
+2017-07-07 03:44:00     103     0
+2017-07-07 03:45:00     400     0
+2017-07-07 03:46:00     757     0
+2017-07-07 03:47:00     188     0
+2017-07-07 03:48:00     309     0
+2017-07-07 03:49:00     253     0
+2017-07-07 03:50:00     198     0
+2017-07-07 03:51:00    1210     0
+2017-07-07 03:52:00     114     0
+2017-07-07 03:53:00     973     0
+2017-07-07 03:54:00     212     0
+2017-07-07 03:55:00     601     0
+2017-07-07 03:56:00    1233  2438
+2017-07-07 03:57:00    2525  8244
+2017-07-07 03:58:00    3155  6576
+2017-07-07 03:59:00    2853  6607
+2017-07-07 04:00:00    2631  6533
+2017-07-07 04:01:00    2304  6977
+2017-07-07 04:02:00    1485  6889
+2017-07-07 04:03:00    2010  6778
+2017-07-07 04:04:00    1730  6364
+2017-07-07 04:05:00    2283  6273
+2017-07-07 04:06:00    2253  5957
+2017-07-07 04:07:00    2746  6053
+2017-07-07 04:08:00    2625  6305
+2017-07-07 04:09:00    2707  6466
+2017-07-07 04:10:00    2274  6264
+2017-07-07 04:11:00    3138  6300
+2017-07-07 04:12:00    2295  6552
+2017-07-07 04:13:00    4785  6403
+2017-07-07 04:14:00    2819  6435
+2017-07-07 04:15:00    2777  6265
+2017-07-07 04:16:00    1461  1348
+2017-07-07 04:17:00     274     0
+2017-07-07 04:18:00     394     0
+2017-07-07 04:19:00     763     0
+2017-07-07 04:20:00     857     0
+2017-07-07 04:21:00     346     0
+2017-07-07 04:22:00     706     0
+2017-07-07 04:23:00    1565     0
+2017-07-07 04:24:00     202     0
+2017-07-07 04:25:00     375     0
+2017-07-07 04:26:00     256     0
+2017-07-07 04:27:00     650     0
+2017-07-07 04:28:00     229     0
+2017-07-07 04:29:00    1830     0
+2017-07-07 04:30:00     552     0
+2017-07-07 04:31:00    1061     0
+2017-07-07 04:32:00     324     0
+2017-07-07 04:33:00     330     0
+2017-07-07 04:34:00      84     0
+2017-07-07 04:35:00     710     0
+2017-07-07 04:36:00     400     0
+2017-07-07 04:37:00     166     0
+2017-07-07 04:38:00     146     0
+2017-07-07 04:39:00      92     0
+2017-07-07 04:40:00    1237     0
+2017-07-07 04:41:00    1118     0
+2017-07-07 04:42:00     816     0
+2017-07-07 04:43:00     532     0
+2017-07-07 04:44:00     216     0
+2017-07-07 04:45:00     887     0
+2017-07-07 04:46:00     235     0
+2017-07-07 04:47:00     533     0
+2017-07-07 04:48:00     381     0
+2017-07-07 04:49:00      94     0
+2017-07-07 04:50:00     759     0
+2017-07-07 04:51:00     358     0
+2017-07-07 04:52:00     558     0
+2017-07-07 04:53:00    1314     0
+2017-07-07 04:54:00     321     0
+2017-07-07 04:55:00    1020     0
+2017-07-07 04:56:00     475     0
+2017-07-07 04:57:00     487     0
+2017-07-07 04:58:00     992     0
+2017-07-07 04:59:00     563     0
+2017-07-07 05:00:00    1106     0
+2017-07-07 05:01:00     287     0
+2017-07-07 05:02:00     159     0
