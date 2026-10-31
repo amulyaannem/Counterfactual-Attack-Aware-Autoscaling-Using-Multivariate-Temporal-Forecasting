@@ -1,0 +1,21 @@
+legit-only windows: SYN-ACK median -1714.0  share with SYN-ACK>0: 0.02
+
+syn flood windows vs legit-only windows (test split, window-level, no context)
+  AUC x_syn_minus_ack    0.441
+  AUC x_syn              0.956
+  AUC x_requests         0.669
+  AUC x_req_per_client   0.508
+  TSD rule SYN-ACK>0: recall 0.099  FPR 0.0201
+    rho 0.5: recall(SYN-ACK>0) 0.050
+    rho 1.0: recall(SYN-ACK>0) 0.065
+    rho 3.0: recall(SYN-ACK>0) 0.180
+
+app flood windows vs legit-only windows (test split, window-level, no context)
+  AUC x_syn_minus_ack    0.436
+  AUC x_syn              0.635
+  AUC x_requests         0.637
+  AUC x_req_per_client   0.517
+  TSD rule SYN-ACK>0: recall 0.021  FPR 0.0201
+    rho 0.5: recall(SYN-ACK>0) 0.021
+    rho 1.0: recall(SYN-ACK>0) 0.020
+    rho 3.0: recall(SYN-ACK>0) 0.022
