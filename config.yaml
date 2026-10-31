@@ -36,6 +36,7 @@ surge:                         # SYNTHETIC legitimate flash crowd
   rise_min: [5, 30]
   plateau_min: 10
   decay_half_life_min: 30
+  tail_cutoff: 0.05            # surge (and mimic attack) ends once the decay falls below 5% of peak (~2.2 h)
 
 attack:                        # SYNTHETIC attack-like traffic
   rho: [0.5, 1, 3]             # A_peak / L_peak over the attack window
