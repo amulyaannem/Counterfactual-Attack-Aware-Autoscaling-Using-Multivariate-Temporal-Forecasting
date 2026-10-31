@@ -1,7 +1,7 @@
 # DECISIONS.md
 
 Project: Counterfactual Attack-Aware Autoscaling Using Multivariate Temporal Forecasting
-Last updated: 2026-10-28 (state before inspecting the Alibaba file)
+Last updated: 2026-10-31 (Phase 7 baselines run; Alibaba file still not inspected)
 
 ## 0. Status summary
 - One paper. Core contribution: a semi-synthetic benchmark with a known counterfactual (true legitimate demand known by construction) for attack-aware autoscaling, plus an identifiability analysis. Second research question (external context signals) is contingent on a feasibility check.
@@ -111,6 +111,7 @@ Result of 02_clean_flows.py after the flag-exclusion patch: 225,745 rows, 95 col
 
 ## 11. Scripts and generated files
 Scripts (src/preprocessing unless noted): 01_inspect.py, 01b_followup_checks.py, 01c_victim_service.py, 01d_inspect_tsd.py, 01e_benign_victim_flows.py, 01f_inspect_tsd_v6.py, 01g_validate_tsd.py, 01h_tsd_label_structure.py, 02_clean_flows.py; src/features/03_minute_series.py; 04_inspect_alibaba.py (pending run).
+Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): 10_baselines.py.
 Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/03_minute_series.png, results/01g_tsd_overview.png; data/processed/flows_clean.parquet, flows_manifest.json, minute_series_A.csv, tsd_jan.csv, tsd_mar.csv.
 
 ## 12. Open items
@@ -139,3 +140,40 @@ Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/0
 matching label totals (per-window match not checked). Flood windows have SYN-ACK/SYN ~ 4e-5 (replay setup, not
 live-victim behaviour). In floods ACK ~ RST, so ACK is not a clean handshake-completion counter (pending check).
 
+
+## 15. WorldCup98 TR1/TR3 (2026-10-30)
+- TR1.gz and TR3.gz downloaded from Zenodo 5145855; md5 matches for all three files, gzip OK. Scripts 05/06 ROOT changed from the absolute Linux path to the repo root (same pattern as the other scripts).
+- TR1 = 1998-05-19 22:00 -> 05-20 22:00 UTC, 3,041,727 requests, 36,131 clients, req/min median 2,109. TR3 = 1998-05-22 22:00 -> 05-23 22:00 UTC, 2,342,242 requests, 28,829 clients, req/min median 1,582. Both: smooth diurnal pattern, no zero-request seconds.
+- No real legitimate flash crowd in TR1/TR2/TR3. The surge component stays SYNTHETIC.
+- TR1 contains one real attack-like burst: 5-s bins 8733-8737 (1998-05-20 10:07:45-10:08:10 UTC), about 2,800 req/5 s vs median 172. Two clients sent about 5,035 requests each for a single object within 22 s (status raw value 66). Kept in the data, flagged `a_baseline_burst`, excluded from evaluation via `a_eval_mask`. Candidate real test case for the method later (not labelled as an attack: intent unknown).
+
+## 16. Phase 6: windowed benchmark dataset (2026-10-30)
+- Script: src/benchmark/08_build_windows.py, config in config.yaml, pins in requirements.txt (system Python 3.13 on the Windows machine; no venv there).
+- Step 5 s (matches TSD windows; a 5-min TSD-length attack spans 60 rows). Sensitivity on real baselines in results/08_window_sensitivity.csv: CV falls 0.47 -> 0.39 (TR2) and lag-1 ACF rises 0.79 -> 0.95 from 5 s to 300 s; at 60 s an attack is only 5 rows. Coarser steps not built yet.
+- Split by calendar day, chronological: train TR2 (05-04), val TR1 (05-20), test TR3 (05-23). Gap of days between splits, far above purge_bins = 720 (1 h lookback). Caveat: traffic level grows across days (median req/5 s 69 / 172 / 132), so val/test are a level shift from train; this is intended as a distribution-shift test, not removed.
+- Legitimate demand L = real baseline + SYNTHETIC surge (linear rise 5 or 30 min, 10-min plateau, exponential decay half-life 30 min, peak ratio 2/5/10 of the trailing 1-h median). Parametric because pageviews.csv is not on this machine; replacing it with empirical shapes is open.
+- Attack A: SYNTHETIC. Flat plateau with abrupt on/off and multiplicative jitter U(0.88, 1.07), from the TSD flood findings (section 14). Durations 5 and 8 min (TSD 4.9 / 7.8 min). Intensity rho = A_peak / L_peak in {0.5, 1, 3}.
+- Counter model: k = 1 connection per legitimate request. SYN flood adds SYNs only. App-layer flood adds SYN, ACK and served requests from 50 sources. Mimic = app-layer flood with the surge shape and legitimate requests-per-client. Spoofed SYNs add no clients (clients counted from served requests, as in the WorldCup98 log).
+- Families: none, surge_only, attack_only, surge_plus_attack, yoyo (2 on / 3 off x 6), mimic, smokescreen (attack starts at surge peak). 49 configs x 2 seeds = 98 series per split, 1.69M rows per split. Seeds from SeedSequence([seed, split, config, rep]).
+- Columns: x_ (requests, syn, ack, syn_minus_ack, clients, req_per_client), y_ (legit_requests, legit_clients, attack_conn, attack_active, surge_active, attack_frac), a_ (series, ts, bin, onset, family, params, baseline, burst flag, eval mask).
+- Scaler: log1p + StandardScaler fit on train only, stored in data/synthetic/scaler_5s.json (applied at load time, scaled data not stored).
+- Gate: src/benchmark/09_leakage_check.py, 11/11 checks pass (results/09_leakage_check.txt).
+- RESOLVED 2026-10-31 (was: legitimate SYN - ACK = 0 exactly, making SYN floods trivially identifiable). TSD ACK counts every ACK-flagged packet, not handshake completions: in TSD non-flood windows (TCP <= 1e5, SYN - ACK < 100, SYN >= 3; 4,401 windows from Jan + Mar) ACK/SYN has median about 14 and 5-95% range about 2-67. New counter model: legitimate SYN ~ Poisson(k * requests), legitimate ACK ~ Poisson(SYN * r_t) with r_t drawn i.i.d. per window from that pool. App-layer and mimic floods use the same pool (conservative: packet-level look-alikes). SYN flood still adds SYNs only; no RST counter is modelled (friend's note: in TSD floods ACK ~ RST).
+- Caveats: r_t is i.i.d. (TSD windows are not contiguous, so no temporal correlation is available); the TSD release deleted H = 0 windows, so the pool is biased; TSD is a replayed 2019 testbed, WorldCup98 is 1998 HTTP. Sensitivity-test the pool and k.
+- Effect on the test split (results/10_syn_flood_separability.txt): legitimate windows have median SYN - ACK of -1,714 and 2.0% have SYN - ACK > 0. Window-level AUC for SYN-flood windows vs legitimate-only windows: x_syn_minus_ack 0.44, x_syn 0.96, x_requests 0.67. TSD rule (SYN - ACK > 0): recall 0.10 at FPR 0.02 (rho 0.5 / 1 / 3: 0.05 / 0.07 / 0.18). App floods: best single-counter AUC 0.64. SYN floods remain detectable through SYN volume without served requests, which is the H1 mechanism, not an artefact. Leakage check rerun: 11/11 pass.
+
+## 17. Phase 7: CPU-only baselines (2026-10-31)
+- Script: src/models/10_baselines.py. Fit on train (TR2), thresholds and spans chosen on val (TR1) by max F1, all numbers on test (TR3). Every run logged to results/phase7/runs.jsonl (git commit, config hash, seed, params, threshold, timings). Tables: results/phase7/detection_test.csv, detection_by_family_test.csv, forecast_test.csv.
+- Phase 6 fix found here: the surge decay was cut at 1e-3 of peak, so each mimic attack stayed "active" for about 5 h of negligible traffic (46,178 of 53,234 attack rows in test). Cutoff now `surge.tail_cutoff` = 0.05 (about 2.2 h after the plateau), applied to surges and mimic attacks. Data rebuilt; leakage check 11/11. Attack-active rows per split 29,574, surge-active 88,362 (identical counts across splits because durations are deterministic; onsets differ).
+- Not run, with reasons: seasonal-naive (each series is one day, no previous day exists); ARIMA (EWMA is the optimal ARIMA(0,1,1) forecast, statsmodels not installed); XGBoost (not installed, sklearn HistGradientBoosting used as the boosted-tree baseline). Time of day (a_bin) is not used as a feature: it is an analysis-only column.
+- Detection, test split (F1 on all series / F1 without mimic series, FPR, false-positive rate inside legitimate surges):
+  - TSD rule SYN - ACK > 0: F1 0.03, recall 0.03, FPR 0.020. SYN - ACK alone is uninformative after the handshake-noise fix (best val threshold flags everything).
+  - static x_syn: 0.29 / 0.30, FPR 0.013, surge-FPR 0.25. static x_requests: 0.26 / 0.24, surge-FPR 0.28 (volume thresholds fire on legitimate surges).
+  - static SYN per request: 0.21 / 0.65, precision 0.93, FPR 0.0002, surge-FPR 0.0000. Catches every SYN-flood window and no app-layer flood window: the H1 mechanism.
+  - EWMA z-score on x_syn (span 60-1440 bins chosen on val): 0.24 / 0.34, event recall 0.97, surge-FPR 0.07.
+  - HistGradientBoosting on 84 trailing features: 0.26 / 0.51, FPR 0.005. Already weak on val (F1 0.24 vs RF 0.41); likely cause: built-in early stopping on random rows of autocorrelated series overfits the train day's traffic level. Not tuned yet.
+  - RandomForest (400k-row subsample, 200 trees, depth 14): 0.54 / 0.90, precision 0.95, FPR 0.0003, surge-FPR 0.0009, event recall 0.92, median detection delay 5 s. Strongest baseline.
+  - Per family (RF window recall): SYN floods 0.92-1.00; app-layer floods 0.56 (yoyo) to 0.64 (attack only), 0.91-1.00 when stacked on a surge; mimic 0.22 (by design).
+- Forecast of x_requests, test: h = 1 (5 s) MAE naive 21.6, trailing mean 20.9, EWMA 19.5, HGB 21.1; h = 12 (1 min) MAE 29.2 / 24.0 / 23.7 / 25.7. EWMA is the best simple forecaster.
+- Counterfactual reference: during attacks, |observed requests - true legitimate| = 180 (reactive estimate). Forecasters track the observed series, so their error against true legitimate demand stays at 157-184 (h = 1) and 130-175 (h = 12). Forecasting alone does not recover legitimate demand: this is the gap Phase 9 (forecast + residual + attribution) must close.
+- Gate: simple-baseline strength is known. Remaining gap is app-layer floods (single-counter AUC about 0.64, RF window recall 0.56-0.64) and mimic (unidentifiable by design). Phase 8 (LSTM/TCN) is only justified if it beats RF on app-layer and yoyo families; first fix HGB validation (time-blocked early stopping) and check feature reliance on absolute traffic level, since train/val/test days differ in level (median 69 / 172 / 132 requests per 5 s).
