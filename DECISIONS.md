@@ -1,7 +1,7 @@
 # DECISIONS.md
 
 Project: Counterfactual Attack-Aware Autoscaling Using Multivariate Temporal Forecasting
-Last updated: 2026-10-31 (Phase 7 baselines run; Alibaba file still not inspected)
+Last updated: 2026-11-02 (Phase 8 temporal models run, gate not passed; Alibaba file still not inspected)
 
 ## 0. Status summary
 - One paper. Core contribution: a semi-synthetic benchmark with a known counterfactual (true legitimate demand known by construction) for attack-aware autoscaling, plus an identifiability analysis. Second research question (external context signals) is contingent on a feasibility check.
@@ -111,7 +111,7 @@ Result of 02_clean_flows.py after the flag-exclusion patch: 225,745 rows, 95 col
 
 ## 11. Scripts and generated files
 Scripts (src/preprocessing unless noted): 01_inspect.py, 01b_followup_checks.py, 01c_victim_service.py, 01d_inspect_tsd.py, 01e_benign_victim_flows.py, 01f_inspect_tsd_v6.py, 01g_validate_tsd.py, 01h_tsd_label_structure.py, 02_clean_flows.py; src/features/03_minute_series.py; 04_inspect_alibaba.py (pending run).
-Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): 10_baselines.py.
+Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/.
 Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/03_minute_series.png, results/01g_tsd_overview.png; data/processed/flows_clean.parquet, flows_manifest.json, minute_series_A.csv, tsd_jan.csv, tsd_mar.csv.
 
 ## 12. Open items
@@ -177,3 +177,22 @@ live-victim behaviour). In floods ACK ~ RST, so ACK is not a clean handshake-com
 - Forecast of x_requests, test: h = 1 (5 s) MAE naive 21.6, trailing mean 20.9, EWMA 19.5, HGB 21.1; h = 12 (1 min) MAE 29.2 / 24.0 / 23.7 / 25.7. EWMA is the best simple forecaster.
 - Counterfactual reference: during attacks, |observed requests - true legitimate| = 180 (reactive estimate). Forecasters track the observed series, so their error against true legitimate demand stays at 157-184 (h = 1) and 130-175 (h = 12). Forecasting alone does not recover legitimate demand: this is the gap Phase 9 (forecast + residual + attribution) must close.
 - Gate: simple-baseline strength is known. Remaining gap is app-layer floods (single-counter AUC about 0.64, RF window recall 0.56-0.64) and mimic (unidentifiable by design). Phase 8 (LSTM/TCN) is only justified if it beats RF on app-layer and yoyo families; first fix HGB validation (time-blocked early stopping) and check feature reliance on absolute traffic level, since train/val/test days differ in level (median 69 / 172 / 132 requests per 5 s).
+- Addendum (2026-11-02), prerequisites set by the gate above, same splits and protocol:
+  - Shared code moved to src/models/common.py (load, features, level_free, thresholds, detection_metrics, by_family) so Phases 7 and 8 use identical evaluation.
+  - Tree features are now float32 (memory). RF is unchanged; untuned HGB moved from F1-no-mimic 0.51 to 0.45 (different histogram bins), confirming it is unstable.
+  - HGB with time-blocked validation (no built-in early stopping, 400 iterations, tree count chosen on val every 25): 0.37 / 0.66, FPR 0.004. Better than untuned HGB, still far below RF.
+  - Level-free features only (ratios to trailing means, z-scores, per-request/per-client ratios): HGB 0.42 / 0.64; RF 0.53 / 0.88, surge-FPR 0.0098 (10x worse than RF on all features). Removing absolute levels does not help, so the train/val/test level shift was not what limited the models.
+
+## 18. Phase 8: temporal models (2026-11-02)
+- Script: src/models/12_temporal.py (PyTorch 2.12 CPU). Same protocol as Phase 7: fit on train (TR2), checkpoint and threshold chosen on val (TR1) by max F1, report on test (TR3). Runs logged to results/phase8/runs.jsonl; comparison against the Phase 7 tree models in results/phase8/comparison_test.csv and detection_by_family_test.csv. Log: results/local_run/12_temporal.txt (not committed).
+- Inputs: 7 causal, level-free channels per 5 s window: log1p of requests, SYN, ACK and clients minus their trailing 1 h mean, and log SYN/request, ACK/SYN, request/client. Standardised with train statistics only.
+- Models: causal dilated TCN (48 channels, dilations 1-64, receptive field 509 windows, about 42 min; 98k parameters) and a one-layer LSTM (64 hidden; 19k parameters). Training: 1024-window chunks (first 512 / 256 windows used only as warm-up, excluded from the loss), batch 32, half the chunks forced to contain an attack, BCE with pos_weight 5, Adam lr 1e-3, 1200 iterations, val F1 checked every 200. Two seeds each. Fit 19-30 min per run on 16 CPU threads.
+- Test results (F1 all / F1 without mimic, FPR, surge-FPR, AP without mimic):
+  - RF [lag features] (Phase 7): 0.54 / 0.89, 0.0003, 0.0009, AP 0.93.
+  - TCN seed 0: 0.29 / 0.55, 0.0018, 0.034, AP 0.57. TCN seed 1: 0.43 / 0.74, 0.0009, 0.018, AP 0.80.
+  - LSTM seed 0: 0.28 / 0.12, 0.042, 0.32, AP 0.05. LSTM seed 1: 0.39 / 0.43, 0.007, 0.13, AP 0.39.
+- AP per family (that family's attack windows vs all legitimate windows), RF vs best TCN seed: attack_only app 0.67 vs 0.30; yoyo app 0.59 vs 0.31; yoyo SYN 0.94 vs 0.97; smokescreen app 1.00 vs 0.63; mimic app 0.44 vs 0.35. The LSTM is below 0.07 on every app-layer family.
+- Stability: val F1 fluctuates by 0.1-0.2 between checks and peaks at different iterations per seed (TCN best at 200 and 800, LSTM at 800 and 1000). Seed-to-seed spread on test F1-no-mimic is 0.19 (TCN) and 0.31 (LSTM), larger than any gain over the baselines.
+- Cost: inference 5.4 us/window (TCN) and 14-16 us/window (LSTM) vs RF 2.2 us/window; RF fits in 3 min.
+- Gate: NOT passed. Neither temporal model beats RF on app-layer or yo-yo floods; the TCN only matches RF on SYN-flood families, which the SYN-per-request ratio already separates. Decision: keep RF [lag features] as the Phase 9 detector; no further LSTM/TCN tuning unless Phase 9 needs a sequence model for the counterfactual demand forecast. The app-layer gap (window recall 0.56-0.64) appears to be an information limit of the four aggregate counters, not a modelling limit, and is reported as such.
+- Not tried (would be needed before claiming temporal models cannot help): longer training with a learning-rate schedule, more seeds, a Transformer, and multi-task training with the forecast target.

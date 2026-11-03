@@ -76,17 +76,17 @@ ewma_z[x_syn_minus_ack],surge_plus_attack,app,0.9982638888888888,0.9986422267481
 ewma_z[x_syn_minus_ack],surge_plus_attack,syn,0.9982638888888888,0.9985403937542431
 ewma_z[x_syn_minus_ack],yoyo,app,0.9988425925925926,0.9987745813152827
 ewma_z[x_syn_minus_ack],yoyo,syn,0.9988425925925926,0.9985217171422458
-hgb[lag features],attack_only,app,0.5299145299145299,0.005183204479838788
-hgb[lag features],attack_only,syn,0.5811965811965812,0.003061481524540293
-hgb[lag features],mimic,app,0.03232969180211386,0.004576584764192281
-hgb[lag features],none,none,,0.0022857473525837624
-hgb[lag features],smokescreen,app,0.9704861111111112,0.003646591019299777
-hgb[lag features],smokescreen,syn,0.9184027777777778,0.006750072737852778
-hgb[lag features],surge_only,none,,0.0041953590648689315
-hgb[lag features],surge_plus_attack,app,0.8133680555555556,0.004708563669867132
-hgb[lag features],surge_plus_attack,syn,0.6588541666666666,0.006662787314518475
-hgb[lag features],yoyo,app,0.42476851851851855,0.005533835171461361
-hgb[lag features],yoyo,syn,0.8981481481481481,0.007936044815311898
+hgb[lag features],attack_only,app,0.5641025641025641,0.007455095041562518
+hgb[lag features],attack_only,syn,0.5790598290598291,0.005362436784281811
+hgb[lag features],mimic,app,0.04503064215294431,0.008082053945275731
+hgb[lag features],none,none,,0.0056999016260633065
+hgb[lag features],smokescreen,app,0.9878472222222222,0.00726408689748812
+hgb[lag features],smokescreen,syn,0.9600694444444444,0.009814760934923868
+hgb[lag features],surge_only,none,,0.00672221900738769
+hgb[lag features],surge_plus_attack,app,0.8602430555555556,0.006560954320628455
+hgb[lag features],surge_plus_attack,syn,0.8585069444444444,0.010488798370672098
+hgb[lag features],yoyo,app,0.5069444444444444,0.009676917391219777
+hgb[lag features],yoyo,syn,0.8807870370370371,0.010999591527105093
 rf[lag features],attack_only,app,0.6410256410256411,0.000285802863841578
 rf[lag features],attack_only,syn,0.9188034188034188,0.0003439322598771532
 rf[lag features],mimic,app,0.2190247801758593,0.00035162885304077814
@@ -98,3 +98,36 @@ rf[lag features],surge_plus_attack,app,0.9131944444444444,9.69838037047813e-05
 rf[lag features],surge_plus_attack,syn,0.9930555555555556,0.00025700707981767045
 rf[lag features],yoyo,app,0.5567129629629629,0.00013615763163525317
 rf[lag features],yoyo,syn,0.9351851851851852,0.0008558479702787342
+"hgb[val-tuned trees, all]",attack_only,app,0.5822649572649573,0.0036330872522234493
+"hgb[val-tuned trees, all]",attack_only,syn,0.8717948717948718,0.0024269022844852642
+"hgb[val-tuned trees, all]",mimic,app,0.08779642952304823,0.0037543142155430772
+"hgb[val-tuned trees, all]",none,none,,0.0064811064174526934
+"hgb[val-tuned trees, all]",smokescreen,app,0.9913194444444444,0.002094850160023276
+"hgb[val-tuned trees, all]",smokescreen,syn,0.9930555555555556,0.0024245950926195326
+"hgb[val-tuned trees, all]",surge_only,none,,0.004103736280693633
+"hgb[val-tuned trees, all]",surge_plus_attack,app,0.9921875,0.003627194258558821
+"hgb[val-tuned trees, all]",surge_plus_attack,syn,0.9895833333333334,0.005329260013577732
+"hgb[val-tuned trees, all]",yoyo,app,0.6076388888888888,0.0033164108848300947
+"hgb[val-tuned trees, all]",yoyo,syn,0.9745370370370371,0.004318142031860886
+"hgb[val-tuned trees, level-free]",attack_only,app,0.6335470085470085,0.0036282431358871515
+"hgb[val-tuned trees, level-free]",attack_only,syn,0.9487179487179487,0.0026836404503090545
+"hgb[val-tuned trees, level-free]",mimic,app,0.15463185007549515,0.004327739729732654
+"hgb[val-tuned trees, level-free]",none,none,,0.0014756090504021758
+"hgb[val-tuned trees, level-free]",smokescreen,app,0.9322916666666666,0.004131510037823683
+"hgb[val-tuned trees, level-free]",smokescreen,syn,0.9982638888888888,0.003035593055959655
+"hgb[val-tuned trees, level-free]",surge_only,none,,0.005232143201589414
+"hgb[val-tuned trees, level-free]",surge_plus_attack,app,0.9722222222222222,0.00482009504412763
+"hgb[val-tuned trees, level-free]",surge_plus_attack,syn,0.9479166666666666,0.005271069731354864
+"hgb[val-tuned trees, level-free]",yoyo,app,0.6030092592592593,0.003549823967633386
+"hgb[val-tuned trees, level-free]",yoyo,syn,0.96875,0.0038610414113711073
+rf[level-free],attack_only,app,0.6121794871794872,9.688232672595865e-06
+rf[level-free],attack_only,syn,0.969017094017094,0.0
+rf[level-free],mimic,app,0.2148947508659739,5.4096746621658175e-06
+rf[level-free],none,none,,5.786702158439905e-05
+rf[level-free],smokescreen,app,1.0,0.0004170303559305596
+rf[level-free],smokescreen,syn,0.9982638888888888,0.00028125303074386576
+rf[level-free],surge_only,none,,0.002806550546843354
+rf[level-free],surge_plus_attack,app,0.9965277777777778,0.0004073319755600815
+rf[level-free],surge_plus_attack,syn,0.9835069444444444,0.0004946173988943847
+rf[level-free],yoyo,app,0.5,4.862772558401898e-05
+rf[level-free],yoyo,syn,0.9525462962962963,2.917663535041139e-05
