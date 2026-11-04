@@ -49,3 +49,14 @@ attack:                        # SYNTHETIC attack-like traffic
   combined_peak_ratio: 5       # surge used in surge+attack and smokescreen scenarios
 
 features: [x_requests, x_syn, x_ack, x_syn_minus_ack, x_clients, x_req_per_client]
+
+sim:                           # SIMULATED capacity model (Phase 10); results are simulated, never measured
+  req_per_replica: 50          # requests one replica serves per 5 s window (10 req/s)
+  syn_cost: 0.2                # work units per SYN (connection setup) relative to one request
+  target_util: 0.6             # utilisation the autoscaler aims for
+  sla_util: 0.9                # utilisation above which latency breaks the SLA (M/M/1: 10x service time)
+  startup_windows: 12          # 60 s replica start-up delay
+  stabilization_windows: 60    # 5 min scale-down stabilisation (max of recent recommendations, HPA-style)
+  min_replicas: 1
+  max_replicas: 200
+  mitigation_margin: 0.1       # filter admits estimated legitimate requests x (1 + margin)
