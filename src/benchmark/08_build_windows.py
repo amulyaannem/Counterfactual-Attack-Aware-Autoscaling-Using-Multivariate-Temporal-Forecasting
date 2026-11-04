@@ -48,7 +48,7 @@ def surge_shape(n, onset, rise_min, plateau_min, hl_min):
     rise, plat, hl = rise_min * PER_MIN, plateau_min * PER_MIN, hl_min * PER_MIN
     s = np.where(t < 0, 0.0, np.minimum((t + 1) / rise, 1.0))
     s = np.where(t >= rise + plat, 0.5 ** ((t - rise - plat) / hl), s)
-    return np.where(s < 1e-3, 0.0, s)
+    return np.where(s < SG["tail_cutoff"], 0.0, s)
 
 
 def plateau_shape(n, start, dur_min):

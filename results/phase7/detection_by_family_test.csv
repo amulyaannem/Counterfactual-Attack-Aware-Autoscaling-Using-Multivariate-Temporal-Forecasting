@@ -1,0 +1,100 @@
+model,family,attack_type,window_recall,fpr
+static[x_syn_minus_ack],attack_only,app,1.0,1.0
+static[x_syn_minus_ack],attack_only,syn,1.0,1.0
+static[x_syn_minus_ack],mimic,app,1.0,1.0
+static[x_syn_minus_ack],none,none,,1.0
+static[x_syn_minus_ack],smokescreen,app,1.0,1.0
+static[x_syn_minus_ack],smokescreen,syn,1.0,1.0
+static[x_syn_minus_ack],surge_only,none,,1.0
+static[x_syn_minus_ack],surge_plus_attack,app,1.0,1.0
+static[x_syn_minus_ack],surge_plus_attack,syn,1.0,1.0
+static[x_syn_minus_ack],yoyo,app,1.0,1.0
+static[x_syn_minus_ack],yoyo,syn,1.0,1.0
+static[x_syn],attack_only,app,0.39636752136752135,0.0
+static[x_syn],attack_only,syn,0.4465811965811966,0.0
+static[x_syn],mimic,app,0.15281108446576072,0.0
+static[x_syn],none,none,,0.0
+static[x_syn],smokescreen,app,1.0,0.019008825526137134
+static[x_syn],smokescreen,syn,1.0,0.015866550286102222
+static[x_syn],surge_only,none,,0.032178886252724574
+static[x_syn],surge_plus_attack,app,1.0,0.028290175540684706
+static[x_syn],surge_plus_attack,syn,1.0,0.02339249345359325
+static[x_syn],yoyo,app,0.5173611111111112,0.0
+static[x_syn],yoyo,syn,0.3333333333333333,0.0
+static[x_requests],attack_only,app,0.39850427350427353,0.0
+static[x_requests],attack_only,syn,0.0,0.0
+static[x_requests],mimic,app,0.173994138022915,0.0
+static[x_requests],none,none,,0.0
+static[x_requests],smokescreen,app,1.0,0.02198622829987392
+static[x_requests],smokescreen,syn,0.9618055555555556,0.018746969256134227
+static[x_requests],surge_only,none,,0.034999903554964025
+static[x_requests],surge_plus_attack,app,1.0,0.03162156919794394
+static[x_requests],surge_plus_attack,syn,0.8350694444444444,0.026689942779555813
+static[x_requests],yoyo,app,0.5416666666666666,0.0
+static[x_requests],yoyo,syn,0.0,0.0
+static[syn_per_req],attack_only,app,0.0,0.0001646999554341297
+static[syn_per_req],attack_only,syn,0.9957264957264957,0.00013563525741634212
+static[syn_per_req],mimic,app,0.0,0.00011901284256764798
+static[syn_per_req],none,none,,0.00026040159712979575
+static[syn_per_req],smokescreen,app,0.0,0.00021336436815051887
+static[syn_per_req],smokescreen,syn,0.9965277777777778,0.0001551740859276501
+static[syn_per_req],surge_only,none,,0.00015913430935709738
+static[syn_per_req],surge_plus_attack,app,0.0,0.00010183299389002037
+static[syn_per_req],surge_plus_attack,syn,0.9965277777777778,0.00017457084666860635
+static[syn_per_req],yoyo,app,0.0,0.00017505981210246834
+static[syn_per_req],yoyo,syn,0.9976851851851852,0.00011670654140164556
+ewma_z[x_syn],attack_only,app,0.7126068376068376,0.010090294328508593
+ewma_z[x_syn],attack_only,syn,0.7628205128205128,0.009475091553798757
+ewma_z[x_syn],mimic,app,0.07296385114130917,0.00926136302162788
+ewma_z[x_syn],none,none,,0.01160233782767201
+ewma_z[x_syn],smokescreen,app,0.9809027777777778,0.010610028125303074
+ewma_z[x_syn],smokescreen,syn,0.96875,0.00969838037047813
+ewma_z[x_syn],surge_only,none,,0.017567463302663813
+ewma_z[x_syn],surge_plus_attack,app,0.8463541666666666,0.014285714285714285
+ewma_z[x_syn],surge_plus_attack,syn,0.6519097222222222,0.017180680826302006
+ewma_z[x_syn],yoyo,app,0.6550925925925926,0.00940460212794927
+ewma_z[x_syn],yoyo,syn,0.5706018518518519,0.009628289665635758
+ewma_z[x_requests],attack_only,app,0.7339743589743589,0.009295859249355732
+ewma_z[x_requests],attack_only,syn,0.010683760683760684,0.010763626499254006
+ewma_z[x_requests],mimic,app,0.07465138999911182,0.00889891481926277
+ewma_z[x_requests],none,none,,0.010763266014698224
+ewma_z[x_requests],smokescreen,app,0.9809027777777778,0.00991174473862865
+ewma_z[x_requests],smokescreen,syn,0.8559027777777778,0.010163902628261081
+ewma_z[x_requests],surge_only,none,,0.01758193005805991
+ewma_z[x_requests],surge_plus_attack,app,0.8498263888888888,0.01431480942682572
+ewma_z[x_requests],surge_plus_attack,syn,0.06336805555555555,0.01737949762389681
+ewma_z[x_requests],yoyo,app,0.6770833333333334,0.008986403687926709
+ewma_z[x_requests],yoyo,syn,0.005787037037037037,0.010805080624769018
+ewma_z[x_syn_minus_ack],attack_only,app,0.9978632478632479,0.9985661415644558
+ewma_z[x_syn_minus_ack],attack_only,syn,0.9989316239316239,0.9986920885891996
+ewma_z[x_syn_minus_ack],mimic,app,0.9994226840749623,0.9985934845878369
+ewma_z[x_syn_minus_ack],none,none,,0.99855332446039
+ewma_z[x_syn_minus_ack],smokescreen,app,0.9982638888888888,0.9984482591407235
+ewma_z[x_syn_minus_ack],smokescreen,syn,0.9982638888888888,0.9986713218892445
+ewma_z[x_syn_minus_ack],surge_only,none,,0.9986304804891692
+ewma_z[x_syn_minus_ack],surge_plus_attack,app,0.9982638888888888,0.9986422267481331
+ewma_z[x_syn_minus_ack],surge_plus_attack,syn,0.9982638888888888,0.9985403937542431
+ewma_z[x_syn_minus_ack],yoyo,app,0.9988425925925926,0.9987745813152827
+ewma_z[x_syn_minus_ack],yoyo,syn,0.9988425925925926,0.9985217171422458
+hgb[lag features],attack_only,app,0.5299145299145299,0.005183204479838788
+hgb[lag features],attack_only,syn,0.5811965811965812,0.003061481524540293
+hgb[lag features],mimic,app,0.03232969180211386,0.004576584764192281
+hgb[lag features],none,none,,0.0022857473525837624
+hgb[lag features],smokescreen,app,0.9704861111111112,0.003646591019299777
+hgb[lag features],smokescreen,syn,0.9184027777777778,0.006750072737852778
+hgb[lag features],surge_only,none,,0.0041953590648689315
+hgb[lag features],surge_plus_attack,app,0.8133680555555556,0.004708563669867132
+hgb[lag features],surge_plus_attack,syn,0.6588541666666666,0.006662787314518475
+hgb[lag features],yoyo,app,0.42476851851851855,0.005533835171461361
+hgb[lag features],yoyo,syn,0.8981481481481481,0.007936044815311898
+rf[lag features],attack_only,app,0.6410256410256411,0.000285802863841578
+rf[lag features],attack_only,syn,0.9188034188034188,0.0003439322598771532
+rf[lag features],mimic,app,0.2190247801758593,0.00035162885304077814
+rf[lag features],none,none,,0.001099473410103582
+rf[lag features],smokescreen,app,0.9982638888888888,0.0002618562700029095
+rf[lag features],smokescreen,syn,1.0,0.00014547570555717196
+rf[lag features],surge_only,none,,0.00043400266188299287
+rf[lag features],surge_plus_attack,app,0.9131944444444444,9.69838037047813e-05
+rf[lag features],surge_plus_attack,syn,0.9930555555555556,0.00025700707981767045
+rf[lag features],yoyo,app,0.5567129629629629,0.00013615763163525317
+rf[lag features],yoyo,syn,0.9351851851851852,0.0008558479702787342
