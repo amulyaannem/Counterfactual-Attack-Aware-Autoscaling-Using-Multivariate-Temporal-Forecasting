@@ -1,7 +1,7 @@
 # DECISIONS.md
 
 Project: Counterfactual Attack-Aware Autoscaling Using Multivariate Temporal Forecasting
-Last updated: 2026-11-02 (Phase 8 temporal models run, gate not passed; Alibaba file still not inspected)
+Last updated: 2026-11-04 (Phase 9 counterfactual estimate; Alibaba file still not inspected)
 
 ## 0. Status summary
 - One paper. Core contribution: a semi-synthetic benchmark with a known counterfactual (true legitimate demand known by construction) for attack-aware autoscaling, plus an identifiability analysis. Second research question (external context signals) is contingent on a feasibility check.
@@ -111,7 +111,7 @@ Result of 02_clean_flows.py after the flag-exclusion patch: 225,745 rows, 95 col
 
 ## 11. Scripts and generated files
 Scripts (src/preprocessing unless noted): 01_inspect.py, 01b_followup_checks.py, 01c_victim_service.py, 01d_inspect_tsd.py, 01e_benign_victim_flows.py, 01f_inspect_tsd_v6.py, 01g_validate_tsd.py, 01h_tsd_label_structure.py, 02_clean_flows.py; src/features/03_minute_series.py; 04_inspect_alibaba.py (pending run).
-Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/.
+Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/. Phase 9: 13_counterfactual.py (+ counterfactual.py).
 Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/03_minute_series.png, results/01g_tsd_overview.png; data/processed/flows_clean.parquet, flows_manifest.json, minute_series_A.csv, tsd_jan.csv, tsd_mar.csv.
 
 ## 12. Open items
@@ -196,3 +196,15 @@ live-victim behaviour). In floods ACK ~ RST, so ACK is not a clean handshake-com
 - Cost: inference 5.4 us/window (TCN) and 14-16 us/window (LSTM) vs RF 2.2 us/window; RF fits in 3 min.
 - Gate: NOT passed. Neither temporal model beats RF on app-layer or yo-yo floods; the TCN only matches RF on SYN-flood families, which the SYN-per-request ratio already separates. Decision: keep RF [lag features] as the Phase 9 detector; no further LSTM/TCN tuning unless Phase 9 needs a sequence model for the counterfactual demand forecast. The app-layer gap (window recall 0.56-0.64) appears to be an information limit of the four aggregate counters, not a modelling limit, and is reported as such.
 - Not tried (would be needed before claiming temporal models cannot help): longer training with a learning-rate schedule, more seeds, a Transformer, and multi-task training with the forecast target.
+
+## 19. Phase 9: counterfactual legitimate-demand estimate (2026-11-04)
+- Scripts: src/models/counterfactual.py (estimators, Holt forecast, action rule), src/models/13_counterfactual.py (`detect`: refits the Phase 7 RF so validation scores exist, a requests-only RF for the Phase 11 ablation, and a legitimate-share regressor; `evaluate`: chooses the estimator on val, reports on test). Outputs: results/phase9/{val_grid.csv, counterfactual_test.csv, chosen.json}; cached scores and estimates in data/synthetic/phase9_*.
+- Detector: RandomForest on the 84 causal lag features (same parameters, rows and seed as Phase 7; val F1 0.406). Threshold by max F1 on val.
+- Estimators (unflagged windows are taken as legitimate in all of them):
+  - freeze: EWMA forecast of the *estimated* legitimate series (attack traffic never enters the forecast); in a flagged window the positive residual is attack.
+  - client: the residual explained by new clients at the legitimate requests-per-client rate is legitimate. Fails because an app flood's own 50 sources add about 50 x 2.9 requests of "legitimate growth" (bias +120).
+  - learned: HistGradientBoosting regressor (300 iterations, no early stopping) predicts the legitimate share of observed requests from the same lag features, trained on train-day attack windows (truth known by construction); estimate = share x observed in flagged windows.
+- Choice on val (MAE in attack windows): learned 565, client 578 (span 720), freeze 579 (span 12). Narrow margin; val errors are higher than test because detection on val is weaker.
+- Test, MAE vs true legitimate requests per 5 s (all attack windows / app-layer attack windows / legitimate surges without attack): observed-as-legitimate 180.4 / 204.9 / 0; freeze 112.1 / 123.9 / 0.02; client 124.0 / 140.0 / 0.01; learned 83.6 / 94.7 / 0.09. With true attack flags: learned 27.2, freeze 30.6. Detection is the bottleneck, not attribution.
+- SYN floods add no requests, so request-level demand is unaffected; freeze still removes noise-level positive residuals there (MAE 13-49), learned does not (0.1-3).
+- Actions (SCALE / HOLD / MITIGATE) are produced by the Phase 10 policy (counterfactual.action): MITIGATE while the detector fires, SCALE when the replica target changes, otherwise HOLD.

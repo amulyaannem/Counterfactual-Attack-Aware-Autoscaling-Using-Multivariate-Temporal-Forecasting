@@ -1,0 +1,9 @@
+{
+ "variant": "learned",
+ "span": 0,
+ "spans": {
+  "freeze": 12,
+  "client": 720,
+  "learned": 0
+ }
+}
