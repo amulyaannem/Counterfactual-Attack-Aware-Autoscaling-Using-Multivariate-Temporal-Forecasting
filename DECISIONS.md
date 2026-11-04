@@ -1,7 +1,7 @@
 # DECISIONS.md
 
 Project: Counterfactual Attack-Aware Autoscaling Using Multivariate Temporal Forecasting
-Last updated: 2026-11-04 (Phase 10 simulated scaling; Alibaba file still not inspected)
+Last updated: 2026-11-04 (Phase 11 ablations; Alibaba file still not inspected)
 
 ## 0. Status summary
 - One paper. Core contribution: a semi-synthetic benchmark with a known counterfactual (true legitimate demand known by construction) for attack-aware autoscaling, plus an identifiability analysis. Second research question (external context signals) is contingent on a feasibility check.
@@ -111,7 +111,7 @@ Result of 02_clean_flows.py after the flag-exclusion patch: 225,745 rows, 95 col
 
 ## 11. Scripts and generated files
 Scripts (src/preprocessing unless noted): 01_inspect.py, 01b_followup_checks.py, 01c_victim_service.py, 01d_inspect_tsd.py, 01e_benign_victim_flows.py, 01f_inspect_tsd_v6.py, 01g_validate_tsd.py, 01h_tsd_label_structure.py, 02_clean_flows.py; src/features/03_minute_series.py; 04_inspect_alibaba.py (pending run).
-Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/. Phase 9: 13_counterfactual.py (+ counterfactual.py). Phase 10: src/sim/14_simulate.py.
+Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/. Phase 9: 13_counterfactual.py (+ counterfactual.py). Phase 10: src/sim/14_simulate.py. Phase 11: src/sim/15_ablations.py; figures 11-15: src/viz/16_figures_method.py.
 Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/03_minute_series.png, results/01g_tsd_overview.png; data/processed/flows_clean.parquet, flows_manifest.json, minute_series_A.csv, tsd_jan.csv, tsd_mar.csv.
 
 ## 12. Open items
@@ -219,3 +219,19 @@ live-victim behaviour). In floods ACK ~ RST, so ACK is not a clean handshake-com
 - Honest negative: total legitimate loss is higher for ours (0.116% vs 0.065%); the filter costs more legitimate requests than the overload it prevents.
 - Action mix (ours): HOLD 97.3%, SCALE 2.0%, MITIGATE 0.68% of windows.
 - Observed weakness: a single undetected onset window lets ours scale up and the 5 min stabilisation keeps that capacity (results/figures/11_counterfactual_example.png, left). Its share of the remaining excess is not measured. Candidate fix (not done): require a scale-up signal to persist for 2 windows.
+
+## 21. Phase 11: ablations and robustness (2026-11-04)
+- Script: src/sim/15_ablations.py. Outputs: results/phase11/{ablations_test.csv, ablations_by_family_test.csv, robustness_scenarios_test.csv, sensitivity_simulator_test.csv}. Figures 11-15 from src/viz/16_figures_method.py. SIMULATED.
+- Note: the estimator chosen on val (learned share) does not use the forecast residual; the forecast-residual estimator is therefore an explicit ablation row, not hidden inside "full method".
+- Ablations, test (estimate MAE in attacks / excess replica-h / SLA violations in attacks / legit wrongly mitigated):
+  - full method: 83.6 / 2.51 / 0.39% / 0.065%.
+  - univariate detector (RF on the 12 request features; val F1 0.21): 116.5 / 3.48 / 0.62% / 0.32% (2.6% of legitimate surge traffic wrongly mitigated). Multivariate input matters.
+  - forecast-residual attribution (freeze): 112.1 / 2.62 / 0.39% / 0.031%. Higher estimate error, same scaling outcome, half the collateral.
+  - legitimate share = 1 - detector score (no learned attribution): 137.4 / 2.51 / 0.46% / 0.74%. Attribution quality drives collateral.
+  - no detector (EWMA residual z > 3 flags, freeze): 174.9 / 5.01 / 1.07% / 0.065%. No better than reactive.
+  - no MITIGATE (scale on estimate only): - / 2.51 / 8.64% / 0. Worse SLA than reactive: capacity is sized for legitimate demand while the attack still reaches the servers.
+  - MITIGATE but scale on observed: - / 5.20 / 0.24% / 0.065%. Best SLA, no cost saving.
+  - perfect detection: 27.2 / 0.63 / 0.22% / 0.12%; perfect detection with forecast-residual: 30.6 / 0.30 / 0.15% / 0.15%.
+- Robustness by attack intensity (excess replica-h reactive -> ours; SLA in attacks): rho 0.5: 1.9 -> 1.3, 0.30% -> 0.05%; rho 1: 3.7 -> 1.6, 1.17% -> 0.52%; rho 3: 10.7 -> 5.6, 1.84% -> 0.59%. By surge peak ratio only the 5x group contains attacks (combined scenarios), so no trend can be read there.
+- Simulator sensitivity (start-up 30/60/120 s, SYN cost 0/0.2/0.5, target utilisation 0.5/0.6/0.75): ours keeps the lowest replica-hours (relative to oracle) and the lowest SLA violations during attacks in every setting; its wrongly-mitigated share stays 0.065% (independent of the capacity model). Longer start-up widens the gap (SLA in attacks at 120 s: reactive 2.52%, ours 0.91%).
+- Cross-dataset (A -> B/C): not possible. TSD-DDoS and Dataset A have no real legitimate surges and are not independent of CIC-DDoS2019; they are used only for noise and magnitudes. Recorded as a threat to validity.
