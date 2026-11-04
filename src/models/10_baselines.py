@@ -11,21 +11,16 @@ import hashlib
 import json
 import subprocess
 import time
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import yaml
 from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostingRegressor, RandomForestClassifier
-from sklearn.metrics import precision_recall_curve
 
-ROOT = Path(__file__).resolve().parents[2]
-CFG = yaml.safe_load(open(ROOT / "config.yaml"))
-SYN = ROOT / CFG["paths"]["synthetic"]
+from common import (CFG, ROOT, SEED, STEP, SYN, best_f1_threshold, by_family, detection_metrics, features, flat,
+                    level_free, load, wide)
+
 OUT = ROOT / CFG["paths"]["results"] / "phase7"
 OUT.mkdir(parents=True, exist_ok=True)
-STEP, SEED = CFG["step_s"], CFG["seed"]
-BASE = ["x_requests", "x_syn", "x_ack", "x_clients"]
 RUN_META = {
     "git_commit": subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True,
                                  text=True).stdout.strip(),
@@ -40,101 +35,9 @@ def log(rec):
     LOG.flush()
 
 
-def load(split):
-    df = pd.read_parquet(SYN / f"windows_{STEP}s_{split}.parquet")
-    n_s = df["a_series"].nunique()
-    assert len(df) % n_s == 0 and (df.groupby("a_series", observed=True)["a_bin"].diff().dropna() == 1).all()
-    return df, n_s
-
-
-def wide(df, n_s, col):
-    """(time x series) frame; every series in a split has the same length and is stored contiguously."""
-    return pd.DataFrame(df[col].to_numpy(dtype=float).reshape(n_s, -1).T)
-
-
-def flat(w):
-    return w.to_numpy().T.ravel()
-
-
-def features(df, n_s, h):
-    """Trailing features from information available h steps before the target window (h = 0: current window)."""
-    cols = {}
-    srcs = {c: wide(df, n_s, c) for c in BASE}
-    srcs["syn_per_req"] = srcs["x_syn"] / srcs["x_requests"].clip(lower=1)
-    srcs["ack_per_syn"] = srcs["x_ack"] / srcs["x_syn"].clip(lower=1)
-    srcs["req_per_client"] = srcs["x_requests"] / srcs["x_clients"].clip(lower=1)
-    for name, w in srcs.items():
-        cur = w.shift(h)
-        past = w.shift(h + 1) if h == 0 else cur
-        if h == 0:
-            cols[name] = cur
-        for lag in [1, 2, 12]:
-            cols[f"{name}_lag{lag}"] = past.shift(lag - 1)
-        for win in [12, 60, 720]:
-            m = past.rolling(win, min_periods=win // 2).mean()
-            cols[f"{name}_mean{win}"] = m
-            cols[f"{name}_ratio{win}"] = (cur if h == 0 else past) / (m.abs() + 1)
-        sd = past.rolling(60, min_periods=30).std()
-        cols[f"{name}_std60"] = sd
-        if h == 0:
-            cols[f"{name}_z60"] = (cur - cols[f"{name}_mean60"]) / (sd + 1)
-    return pd.DataFrame({k: flat(v) for k, v in cols.items()})
-
-
-def best_f1_threshold(y, s):
-    s = np.nan_to_num(s, nan=np.nanmin(s) - 1)  # no history yet -> lowest score, never flagged first
-    p, r, t = precision_recall_curve(y, s)
-    f = 2 * p * r / np.maximum(p + r, 1e-12)
-    i = int(np.nanargmax(f[:-1]))
-    return float(t[i]), float(f[i])
-
-
-def detection_metrics(df, n_s, pred):
-    m = df["a_eval_mask"].to_numpy() == 1
-    y = df["y_attack_active"].to_numpy() == 1
-    pred = pred.astype(bool)
-    tp, fp = (pred & y & m).sum(), (pred & ~y & m).sum()
-    fn, tn = (~pred & y & m).sum(), (~pred & ~y & m).sum()
-    prec, rec = tp / max(tp + fp, 1), tp / max(tp + fn, 1)
-    out = {"precision": prec, "recall": rec, "f1": 2 * prec * rec / max(prec + rec, 1e-12), "fpr": fp / max(fp + tn, 1)}
-    # same metrics without mimic series (legitimate look-alikes, unidentifiable by design)
-    k = m & (df["a_family"].to_numpy() != "mimic")
-    tp2, fp2, fn2 = (pred & y & k).sum(), (pred & ~y & k).sum(), (~pred & y & k).sum()
-    p2, r2 = tp2 / max(tp2 + fp2, 1), tp2 / max(tp2 + fn2, 1)
-    out.update({"precision_no_mimic": p2, "recall_no_mimic": r2, "f1_no_mimic": 2 * p2 * r2 / max(p2 + r2, 1e-12)})
-    # event level: an event is a contiguous attack-active run inside one series
-    yw, pw = y.reshape(n_s, -1), pred.reshape(n_s, -1)
-    delays, missed = [], 0
-    for ys, ps in zip(yw, pw):
-        d = np.diff(np.r_[0, ys.astype(int), 0])
-        for s, e in zip(np.where(d == 1)[0], np.where(d == -1)[0]):
-            hit = np.flatnonzero(ps[s:e])
-            if len(hit):
-                delays.append(hit[0] * STEP)
-            else:
-                missed += 1
-    n_ev = len(delays) + missed
-    out.update({"events": n_ev, "event_recall": len(delays) / max(n_ev, 1),
-                "median_delay_s": float(np.median(delays)) if delays else np.nan})
-    neg = ~y & m
-    out["false_alarms_per_hour"] = (pred & neg).sum() / (neg.sum() * STEP / 3600)
-    surge = neg & (df["y_surge_active"].to_numpy() == 1)
-    out["fpr_during_legit_surge"] = (pred & surge).sum() / max(surge.sum(), 1)
-    return out
-
-
-def by_family(df, pred, model):
-    rows = []
-    for fam, g in df.assign(pred=pred.astype(bool)).groupby(["a_family", "a_attack_type"], observed=True):
-        y = g["y_attack_active"] == 1
-        rows.append({"model": model, "family": fam[0], "attack_type": fam[1],
-                     "window_recall": (g["pred"] & y).sum() / max(y.sum(), 1) if y.any() else np.nan,
-                     "fpr": (g["pred"] & ~y).sum() / max((~y).sum(), 1)})
-    return rows
-
-
 data = {s: load(s) for s in ["train", "val", "test"]}
 det_rows, fam_rows, fc_rows = [], [], []
+test_scores, test_thresholds = {}, {}  # per-window test scores, for figures
 
 
 def report(name, kind, params, s_val, s_test, fit_s, infer_s):
@@ -148,6 +51,7 @@ def report(name, kind, params, s_val, s_test, fit_s, infer_s):
     log(rec)
     det_rows.append({k: v for k, v in rec.items() if k != "params"} | {"params": json.dumps(params)})
     fam_rows.extend(by_family(te, np.nan_to_num(s_test, nan=-np.inf) >= thr, name))
+    test_scores[name], test_thresholds[name] = np.asarray(s_test, dtype=np.float32), thr
     print(f"{name:<28} F1 {met['f1']:.3f}  F1-no-mimic {met['f1_no_mimic']:.3f}  P {met['precision']:.3f}  "
           f"R {met['recall']:.3f}  FPR {met['fpr']:.4f}  "
           f"event-recall {met['event_recall']:.3f}  delay {met['median_delay_s']}s  surge-FPR "
@@ -192,7 +96,7 @@ for col in ["x_syn", "x_requests", "x_syn_minus_ack"]:
     report(f"ewma_z[{col}]", "ewma_residual", {"feature": col, "span_bins": best[0]}, best[2], s_te, 0.0, dt)
 
 # ---- 3. tree models on lagged features ------------------------------------------
-X = {s: features(*data[s], 0) for s in data}
+X = {s: features(*data[s], 0).astype(np.float32) for s in data}  # float32: 3 splits x 84 cols fit in RAM
 y_tr = data["train"][0]["y_attack_active"].to_numpy()
 print(f"lag features: {X['train'].shape[1]}")
 models = {
@@ -212,6 +116,44 @@ for name, mdl in models.items():
     params["train_rows"] = int(len(idx))
     report(name, "tree_lagged", params, sv, s_te, fit_s, dt)
 
+# Prerequisites logged after the first Phase 7 run: (a) HGB's built-in early stopping holds out random rows of
+# autocorrelated series, so choose the number of trees on the val day instead; (b) drop absolute-level features,
+# because the train/val/test days differ in traffic level.
+LF = level_free(X["train"].columns)
+print(f"level-free features: {len(LF)}")
+yv, mv = data["val"][0]["y_attack_active"].to_numpy(), data["val"][0]["a_eval_mask"].to_numpy() == 1
+for cols, tag in [(list(X["train"].columns), "all"), (LF, "level-free")]:
+    name = f"hgb[val-tuned trees, {tag}]"
+    t0 = time.perf_counter()
+    hgb = HistGradientBoostingClassifier(max_iter=400, learning_rate=0.1, max_leaf_nodes=63, early_stopping=False,
+                                         random_state=SEED).fit(X["train"][cols], y_tr)
+    fit_s = time.perf_counter() - t0
+    best = (0, -1.0)
+    for it, p in enumerate(hgb.staged_predict_proba(X["val"][cols]), start=1):
+        if it % 25 == 0:
+            f1 = best_f1_threshold(yv[mv], p[mv, 1])[1]
+            if f1 > best[1]:
+                best, sv = (it, f1), p[:, 1]
+    test_iter = hgb.staged_predict_proba(X["test"][cols])
+    t0 = time.perf_counter()
+    for it, p in enumerate(test_iter, start=1):
+        if it == best[0]:
+            s_te = p[:, 1]
+            break
+    dt = time.perf_counter() - t0
+    report(name, "tree_lagged", {"trees_chosen_on_val": best[0], "max_leaf_nodes": 63, "features": tag,
+                                 "n_features": len(cols)}, sv, s_te, fit_s, dt)
+rf = RandomForestClassifier(n_estimators=200, max_depth=14, min_samples_leaf=20, n_jobs=-1, random_state=SEED)
+idx = rng.choice(len(y_tr), 400_000, replace=False)
+t0 = time.perf_counter(); rf.fit(X["train"][LF].iloc[idx], y_tr[idx]); fit_s = time.perf_counter() - t0
+sv = rf.predict_proba(X["val"][LF])[:, 1]
+t0 = time.perf_counter(); s_te = rf.predict_proba(X["test"][LF])[:, 1]; dt = time.perf_counter() - t0
+report("rf[level-free]", "tree_lagged", {"n_estimators": 200, "max_depth": 14, "min_samples_leaf": 20,
+                                         "train_rows": 400_000, "features": "level-free", "n_features": len(LF)},
+       sv, s_te, fit_s, dt)
+
+pd.DataFrame(test_scores).to_parquet(SYN / f"phase7_test_scores_{STEP}s.parquet", index=False)
+json.dump(test_thresholds, open(SYN / f"phase7_test_thresholds_{STEP}s.json", "w"), indent=2)
 pd.DataFrame(det_rows).to_csv(OUT / "detection_test.csv", index=False)
 pd.DataFrame(fam_rows).to_csv(OUT / "detection_by_family_test.csv", index=False)
 
@@ -251,7 +193,7 @@ for h in [1, 12]:
     best = min([6, 12, 60], key=lambda sp: np.nanmean(np.abs(flat(w["val"].shift(h).ewm(span=sp).mean())
                                                              - vb["x_requests"].to_numpy(float))))
     fc_metrics(te, flat(w["test"].shift(h).ewm(span=best).mean()), h, "ewma", {"span_bins": best}, 0, 0)
-    Xh = {s: features(*data[s], h) for s in ["train", "test"]}
+    Xh = {s: features(*data[s], h).astype(np.float32) for s in ["train", "test"]}
     reg = HistGradientBoostingRegressor(max_iter=300, max_leaf_nodes=63, early_stopping=True, random_state=SEED)
     t0 = time.perf_counter(); reg.fit(Xh["train"], data["train"][0]["x_requests"].to_numpy(float))
     fit_s = time.perf_counter() - t0
