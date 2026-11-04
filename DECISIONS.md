@@ -1,7 +1,7 @@
 # DECISIONS.md
 
 Project: Counterfactual Attack-Aware Autoscaling Using Multivariate Temporal Forecasting
-Last updated: 2026-11-04 (Phase 9 counterfactual estimate; Alibaba file still not inspected)
+Last updated: 2026-11-04 (Phase 10 simulated scaling; Alibaba file still not inspected)
 
 ## 0. Status summary
 - One paper. Core contribution: a semi-synthetic benchmark with a known counterfactual (true legitimate demand known by construction) for attack-aware autoscaling, plus an identifiability analysis. Second research question (external context signals) is contingent on a feasibility check.
@@ -111,7 +111,7 @@ Result of 02_clean_flows.py after the flag-exclusion patch: 225,745 rows, 95 col
 
 ## 11. Scripts and generated files
 Scripts (src/preprocessing unless noted): 01_inspect.py, 01b_followup_checks.py, 01c_victim_service.py, 01d_inspect_tsd.py, 01e_benign_victim_flows.py, 01f_inspect_tsd_v6.py, 01g_validate_tsd.py, 01h_tsd_label_structure.py, 02_clean_flows.py; src/features/03_minute_series.py; 04_inspect_alibaba.py (pending run).
-Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/. Phase 9: 13_counterfactual.py (+ counterfactual.py).
+Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/. Phase 9: 13_counterfactual.py (+ counterfactual.py). Phase 10: src/sim/14_simulate.py.
 Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/03_minute_series.png, results/01g_tsd_overview.png; data/processed/flows_clean.parquet, flows_manifest.json, minute_series_A.csv, tsd_jan.csv, tsd_mar.csv.
 
 ## 12. Open items
@@ -208,3 +208,14 @@ live-victim behaviour). In floods ACK ~ RST, so ACK is not a clean handshake-com
 - Test, MAE vs true legitimate requests per 5 s (all attack windows / app-layer attack windows / legitimate surges without attack): observed-as-legitimate 180.4 / 204.9 / 0; freeze 112.1 / 123.9 / 0.02; client 124.0 / 140.0 / 0.01; learned 83.6 / 94.7 / 0.09. With true attack flags: learned 27.2, freeze 30.6. Detection is the bottleneck, not attribution.
 - SYN floods add no requests, so request-level demand is unaffected; freeze still removes noise-level positive residuals there (MAE 13-49), learned does not (0.1-3).
 - Actions (SCALE / HOLD / MITIGATE) are produced by the Phase 10 policy (counterfactual.action): MITIGATE while the detector fires, SCALE when the replica target changes, otherwise HOLD.
+
+## 20. Phase 10: SIMULATED scaling evaluation (2026-11-04)
+- Script: src/sim/14_simulate.py; parameters in config.yaml `sim`. Outputs: results/phase10/{policies_test.csv, policies_by_family_test.csv, action_mix_ours.json}. All numbers are simulated, never measured.
+- Capacity model: a replica serves 50 work units per 5 s; a request costs 1, a SYN 0.2 (connection set-up). Replicas are ready 60 s after the request and billed from the request. Scale-down follows the maximum recommendation of the last 5 min (HPA-style stabilisation). Target utilisation 0.6; utilisation above 0.9 counts as an SLA violation (M/M/1: latency above 10x service time); work above capacity is dropped, legitimate share counted as lost. Decisions at t use information up to t-1.
+- Mitigation: idealised filter while MITIGATE is active (flag at t-1): admits at most the estimate x 1.1 requests, dropping attack traffic first, and SYNs beyond the admitted requests x 1.1 (SYN cookies). Legitimate requests above the budget are "wrongly mitigated".
+- Policies: oracle (true legitimate work incl. its own SYNs, perfect look-ahead over the start-up delay, perfect mitigation); reactive (last observed work); naive predictive (max of observed and a Holt forecast at the start-up horizon); ours (same rule on estimated legitimate work in flagged windows, observed work otherwise, plus MITIGATE).
+- Fix during the phase: the first version charged the oracle and ours with exactly one SYN per legitimate request while reactive saw the Poisson-noisy SYN counts; that inflated reactive's unneeded scale-ups (12 vs 1 on attack-free series). The oracle now uses the true legitimate SYNs and ours uses observed work when not flagged.
+- Test day, 98 series (excess replica-hours over oracle per series-day / unneeded scale-ups per series / SLA-violating windows during attacks / legitimate lost to overload / legitimate wrongly mitigated): reactive 4.67 / 4.8 / 1.10% / 0.065% / 0; naive predictive 5.20 / 5.7 / 1.10% / 0.065% / 0; ours 2.51 / 3.3 / 0.39% / 0.051% / 0.065%. Total replica-hours are dominated by baseline traffic (about 218-221 per series-day), so differences are reported as excess over the oracle.
+- Honest negative: total legitimate loss is higher for ours (0.116% vs 0.065%); the filter costs more legitimate requests than the overload it prevents.
+- Action mix (ours): HOLD 97.3%, SCALE 2.0%, MITIGATE 0.68% of windows.
+- Observed weakness: a single undetected onset window lets ours scale up and the 5 min stabilisation keeps that capacity (results/figures/11_counterfactual_example.png, left). Its share of the remaining excess is not measured. Candidate fix (not done): require a scale-up signal to persist for 2 windows.
