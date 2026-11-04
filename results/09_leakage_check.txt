@@ -1,0 +1,13 @@
+[PASS] features are x_ columns only                     ['x_requests', 'x_syn', 'x_ack', 'x_syn_minus_ack', 'x_clients', 'x_req_per_client']
+[PASS] no feature identical to a label                  []
+[PASS] derived features use only x_ inputs              
+[PASS] series contiguous and ordered (diff == step)     
+[PASS] chronological train < val < test with purge gap  {'train': ['1998-05-03 22:00:00', '1998-05-04 21:59:55'], 'val': ['1998-05-19 22:00:00', '1998-05-20 21:59:55'], 'test': ['1998-05-22 22:00:00', '1998-05-23 22:00:00']}
+[PASS] no series id shared across splits                
+[PASS] scaler stats == train stats                      
+[PASS] scaler stats != test stats                       
+[PASS] synthetic onsets differ across splits            
+[PASS] no a_ column in features                         
+[PASS] TR1 real burst masked out of evaluation          
+
+11/11 checks passed

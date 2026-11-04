@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path("/home/ammu/Desktop/Documents/projects/ai_project")
+ROOT = Path(__file__).resolve().parents[2]
 ap = argparse.ArgumentParser()
 ap.add_argument("files", nargs="+")
 ap.add_argument("--tcp"); ap.add_argument("--syn"); ap.add_argument("--ack")

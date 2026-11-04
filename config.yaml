@@ -1,0 +1,50 @@
+# Phase 6 benchmark configuration. Everything synthetic is generated from these values and the seed.
+paths:
+  raw: data/raw
+  processed: data/processed
+  synthetic: data/synthetic
+  results: results
+
+step_s: 5                      # 5 s windows, same as TSD; sensitivity in results/08_window_sensitivity.csv
+seed: 20261030
+n_seeds: 2                     # independent draws of every scenario config per day
+
+# Chronological split by calendar date: one real WorldCup98 day per split.
+splits:
+  train: TR2                   # 1998-05-04
+  val: TR1                     # 1998-05-20
+  test: TR3                    # 1998-05-23
+purge_bins: 720                # max lookback allowed for features (1 h); splits must be at least this far apart
+
+# Real attack-like burst inside the TR1 baseline (2 clients, ~5k requests each on one object, 22 s).
+# Kept in the data, flagged analysis-only, excluded from evaluation masks.
+baseline_bursts:
+  TR1: [[8733, 8737]]
+
+legit:
+  connections_per_request: 1   # k; HTTP/1.0 in 1998 (assumption, sensitivity-test later)
+  onset_window_h: [2, 20]      # event onset drawn uniformly in this range of the day
+  level_window_bins: 720       # trailing median used as the pre-event baseline level
+  # Handshake noise: ACK packets per SYN, drawn i.i.d. per window from TSD non-flood windows
+  # (TCP <= 1e5, SYN - ACK < 100, SYN >= min_syn). Median about 14, 5-95% about 2-67.
+  ack_ratio_files: [jan-12-dataset-final-version-csv-ieeedataport.csv,
+                    mar-11-dataset-final-version-csv-ieeedataport.csv]
+  ack_ratio_min_syn: 3
+
+surge:                         # SYNTHETIC legitimate flash crowd
+  peak_ratio: [2, 5, 10]       # peak / pre-event baseline level
+  rise_min: [5, 30]
+  plateau_min: 10
+  decay_half_life_min: 30
+
+attack:                        # SYNTHETIC attack-like traffic
+  rho: [0.5, 1, 3]             # A_peak / L_peak over the attack window
+  duration_min: [5, 8]         # TSD flood durations: Jan 4.9 min, Mar 7.8 min
+  plateau_jitter: [0.88, 1.07] # TSD Jan flood windows relative to their median (flat plateau)
+  app_flood_clients: 50        # distinct sources of a handshake-completing flood
+  yoyo_on_min: 2
+  yoyo_off_min: 3
+  yoyo_cycles: 6
+  combined_peak_ratio: 5       # surge used in surge+attack and smokescreen scenarios
+
+features: [x_requests, x_syn, x_ack, x_syn_minus_ack, x_clients, x_req_per_client]

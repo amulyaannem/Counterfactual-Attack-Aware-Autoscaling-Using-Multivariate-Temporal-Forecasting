@@ -2,7 +2,7 @@ import sys, gzip, json
 from pathlib import Path
 import numpy as np
 
-ROOT = Path("/home/ammu/Desktop/Documents/projects/ai_project")
+ROOT = Path(__file__).resolve().parents[2]
 path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data/raw/worldcup98/TR2.gz"
 name = path.stem
 DT = np.dtype([("ts", ">u4"), ("client", ">u4"), ("obj", ">u4"), ("size", ">u4"),
