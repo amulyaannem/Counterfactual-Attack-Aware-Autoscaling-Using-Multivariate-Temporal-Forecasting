@@ -1,7 +1,7 @@
 # DECISIONS.md
 
 Project: Counterfactual Attack-Aware Autoscaling Using Multivariate Temporal Forecasting
-Last updated: 2026-11-04 (Phase 11 ablations; Alibaba file still not inspected)
+Last updated: 2026-11-04 (Phase 12 paper draft and reproducibility package; venue open; Alibaba file still not inspected)
 
 ## 0. Status summary
 - One paper. Core contribution: a semi-synthetic benchmark with a known counterfactual (true legitimate demand known by construction) for attack-aware autoscaling, plus an identifiability analysis. Second research question (external context signals) is contingent on a feasibility check.
@@ -111,7 +111,7 @@ Result of 02_clean_flows.py after the flag-exclusion patch: 225,745 rows, 95 col
 
 ## 11. Scripts and generated files
 Scripts (src/preprocessing unless noted): 01_inspect.py, 01b_followup_checks.py, 01c_victim_service.py, 01d_inspect_tsd.py, 01e_benign_victim_flows.py, 01f_inspect_tsd_v6.py, 01g_validate_tsd.py, 01h_tsd_label_structure.py, 02_clean_flows.py; src/features/03_minute_series.py; 04_inspect_alibaba.py (pending run).
-Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/. Phase 9: 13_counterfactual.py (+ counterfactual.py). Phase 10: src/sim/14_simulate.py. Phase 11: src/sim/15_ablations.py; figures 11-15: src/viz/16_figures_method.py.
+Phase 6 (src/benchmark): 08_build_windows.py, 09_leakage_check.py. Phase 7 (src/models): common.py (shared loading, features, metrics), 10_baselines.py. Phase 8: 12_temporal.py. Figures: src/viz/11_figures.py -> results/figures/. Phase 9: 13_counterfactual.py (+ counterfactual.py). Phase 10: src/sim/14_simulate.py. Phase 11: src/sim/15_ablations.py; figures 11-15: src/viz/16_figures_method.py. Phase 12: scripts/run_all.sh (full rebuild).
 Outputs: results/01_inspect_report.txt, results/01c_minute_counts.csv, results/03_minute_series.png, results/01g_tsd_overview.png; data/processed/flows_clean.parquet, flows_manifest.json, minute_series_A.csv, tsd_jan.csv, tsd_mar.csv.
 
 ## 12. Open items
@@ -235,3 +235,8 @@ live-victim behaviour). In floods ACK ~ RST, so ACK is not a clean handshake-com
 - Robustness by attack intensity (excess replica-h reactive -> ours; SLA in attacks): rho 0.5: 1.9 -> 1.3, 0.30% -> 0.05%; rho 1: 3.7 -> 1.6, 1.17% -> 0.52%; rho 3: 10.7 -> 5.6, 1.84% -> 0.59%. By surge peak ratio only the 5x group contains attacks (combined scenarios), so no trend can be read there.
 - Simulator sensitivity (start-up 30/60/120 s, SYN cost 0/0.2/0.5, target utilisation 0.5/0.6/0.75): ours keeps the lowest replica-hours (relative to oracle) and the lowest SLA violations during attacks in every setting; its wrongly-mitigated share stays 0.065% (independent of the capacity model). Longer start-up widens the gap (SLA in attacks at 120 s: reactive 2.52%, ours 0.91%).
 - Cross-dataset (A -> B/C): not possible. TSD-DDoS and Dataset A have no real legitimate surges and are not independent of CIC-DDoS2019; they are used only for noise and magnitudes. Recorded as a threat to validity.
+
+## 22. Phase 12: paper draft and reproducibility package (2026-11-04)
+- paper/draft.md: claims framed as "attack-like traffic", all scaling numbers labelled simulated, threats to validity (synthetic surges and attacks, simulated scaling, one 1998 site, TSD/CIC-DDoS2019 overlap, generator knowledge in training, onset lag, mimic floods).
+- Reproducibility: README.md (data placement, pipeline, main results), scripts/run_all.sh (full rebuild; SKIP_TEMPORAL=1 skips Phase 8), config.yaml (all parameters, seed 20261030), requirements.txt (torch added for Phase 8 only), runs.jsonl logs with git commit and config hash.
+- Venue: still open. Candidates listed in the draft are unverified (page limits and deadlines not checked); current scope fits a workshop or short paper.
